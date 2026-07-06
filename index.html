@@ -186,8 +186,8 @@
                     <div class="stat-value" id="scoreStat">0</div>
                 </div>
                 <div class="stat" id="guardStatBox">
-                    <div class="stat-label">WACHEN</div>
-                    <div class="stat-value" id="guardsStat">0</div>
+                    <div class="stat-label">ZEIT ÜBRIG</div>
+                    <div class="stat-value" id="timeStat">15s</div>
                 </div>
 
                 <div class="objective" id="objective">
@@ -242,15 +242,21 @@
             wood: 0,
             woodNeeded: 20,
             guards: 0,
-            gameOverReason: ''
+            gameOverReason: '',
+            escapeTimeLeft: 15,
+            escapeTimeMax: 15,
+            wasInHorse: true,
+            guardsSeen: false
         };
 
         let horse = {
             x: canvas.width / 2,
             y: canvas.height / 2,
-            width: 80,
-            height: 100,
-            radius: 100
+            width: 60,
+            height: 80,
+            radius: 60,
+            vx: 0,
+            vy: 0
         };
 
         let trees = [];
@@ -295,12 +301,16 @@
                     y: horse.y + Math.sin(angle) * 300,
                     width: 20,
                     height: 20,
-                    speed: 2.5,
+                    speed: 0,
                     targetX: horse.x,
-                    targetY: horse.y
+                    targetY: horse.y,
+                    canSeePlayer: false
                 });
             }
             game.guards = guards.length;
+            game.escapeTimeLeft = game.escapeTimeMax;
+            game.wasInHorse = true;
+            game.guardsSeen = false;
         }
 
         // Input handling
@@ -364,6 +374,8 @@
         function startPhase3() {
             game.phase = PHASES.ATTACKING;
             spawnGuards();
+            horse.vx = 0;
+            horse.vy = 0;
         }
 
         // Particles
@@ -418,28 +430,52 @@
                 const playerDist = Math.sqrt((player.x - horse.x) ** 2 + (player.y - horse.y) ** 2);
                 const inHorse = playerDist < horse.radius;
 
-                // Guard AI
-                guards.forEach(guard => {
-                    const dx = player.x - guard.x;
-                    const dy = player.y - guard.y;
+                // Track if player leaves horse
+                if (!inHorse && game.wasInHorse) {
+                    // Player just left the horse - guards can now attack
+                    game.guardsSeen = true;
+                }
+
+                if (inHorse) {
+                    game.wasInHorse = true;
+                } else {
+                    game.wasInHorse = false;
+                }
+
+                // If guards can see player and player is not in horse, attack
+                if (game.guardsSeen && !inHorse) {
+                    // Horse moves toward guards
+                    const randomGuard = guards[Math.floor(Math.random() * guards.length)];
+                    const dx = randomGuard.x - horse.x;
+                    const dy = randomGuard.y - horse.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
-
+                    
                     if (dist > 0) {
-                        guard.x += (dx / dist) * guard.speed;
-                        guard.y += (dy / dist) * guard.speed;
+                        horse.vx = (dx / dist) * 3;
+                        horse.vy = (dy / dist) * 3;
                     }
 
-                    // Catch player
-                    if (Math.sqrt((guard.x - player.x) ** 2 + (guard.y - player.y) ** 2) < 25) {
-                        if (!inHorse) {
-                            endGame(false, 'Du wurdest erwischt! Game Over!');
-                        }
+                    // Check if horse hits player
+                    const horseDist = Math.sqrt((player.x - horse.x) ** 2 + (player.y - horse.y) ** 2);
+                    if (horseDist < 50) {
+                        endGame(false, 'Die Wachen haben dich erwischt!');
                     }
-                });
+                } else {
+                    // Horse stays still when player is inside
+                    horse.vx = 0;
+                    horse.vy = 0;
+                }
 
-                // Check if all guards defeated while in horse
-                if (guards.length === 0 && inHorse) {
-                    startPhase3();
+                // Move horse
+                horse.x += horse.vx;
+                horse.y += horse.vy;
+
+                // Count down escape time
+                if (inHorse) {
+                    game.escapeTimeLeft -= 0.016; // 60fps
+                    if (game.escapeTimeLeft <= 0) {
+                        startPhase3();
+                    }
                 }
             }
 
@@ -456,15 +492,15 @@
                 player.x = Math.max(0, Math.min(canvas.width, player.x + moveX));
                 player.y = Math.max(0, Math.min(canvas.height, player.y + moveY));
 
-                // Guard AI
+                // Guard AI - move toward player
                 guards.forEach(guard => {
                     const dx = player.x - guard.x;
                     const dy = player.y - guard.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
 
                     if (dist > 0) {
-                        guard.x += (dx / dist) * guard.speed;
-                        guard.y += (dy / dist) * guard.speed;
+                        guard.x += (dx / dist) * 2.5;
+                        guard.y += (dy / dist) * 2.5;
                     }
 
                     // Hit player
@@ -497,7 +533,7 @@
 
             // Draw horse
             ctx.fillStyle = '#8B4513';
-            ctx.fillRect(horse.x - 40, horse.y - 50, 80, 100);
+            ctx.fillRect(horse.x - 30, horse.y - 40, 60, 80);
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 50px Arial';
             ctx.textAlign = 'center';
@@ -509,13 +545,13 @@
                 ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
                 ctx.lineWidth = 3;
                 ctx.beginPath();
-                ctx.arc(horse.x, horse.y, 80, 0, Math.PI * 2);
+                ctx.arc(horse.x, horse.y, 60, 0, Math.PI * 2);
                 ctx.stroke();
             }
 
-            // Draw horse circle (Phase 2)
+            // Draw horse safety circle (Phase 2)
             if (game.phase === PHASES.ESCAPING) {
-                ctx.strokeStyle = 'rgba(0, 255, 0, 0.3)';
+                ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
                 ctx.lineWidth = 3;
                 ctx.beginPath();
                 ctx.arc(horse.x, horse.y, horse.radius, 0, Math.PI * 2);
@@ -580,7 +616,7 @@
                 buildProgress = `Holz: ${game.wood}/${game.woodNeeded}`;
             } else if (game.phase === PHASES.ESCAPING) {
                 phaseText = 'PHASE 2: BLEIB IM PFERD!';
-                buildProgress = `Wachen: ${guards.length}`;
+                buildProgress = `Zeit: ${Math.ceil(game.escapeTimeLeft)}s`;
             } else if (game.phase === PHASES.ATTACKING) {
                 phaseText = 'PHASE 3: BESIEGE ALLE WACHEN!';
                 buildProgress = `Wachen: ${guards.length}`;
@@ -596,7 +632,7 @@
             document.getElementById('woodStat').textContent = `${game.wood}/${game.woodNeeded}`;
             document.getElementById('treesStat').textContent = trees.length;
             document.getElementById('scoreStat').textContent = game.score;
-            document.getElementById('guardsStat').textContent = guards.length;
+            document.getElementById('timeStat').textContent = Math.ceil(game.escapeTimeLeft) + 's';
 
             const phaseDisplay = document.getElementById('phaseDisplay');
             phaseDisplay.className = 'phase-display';
@@ -609,7 +645,7 @@
             } else if (game.phase === PHASES.ESCAPING) {
                 phaseDisplay.className += ' phase2';
                 phaseDisplay.textContent = '🤫 PHASE 2: BLEIB IM PFERD!';
-                document.getElementById('objective').textContent = 'Bleib im grünen Kreis! Die Wachen können dich nicht fangen wenn du drin bist!';
+                document.getElementById('objective').textContent = `Bleib ${Math.ceil(game.escapeTimeLeft)}s im grünen Kreis! Wenn du rausgehst, sehen dich die Wachen!`;
                 document.getElementById('guardStatBox').style.display = 'block';
             } else if (game.phase === PHASES.ATTACKING) {
                 phaseDisplay.className += ' phase3';
