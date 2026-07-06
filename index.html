@@ -175,11 +175,11 @@
                 </div>
                 <div class="stat">
                     <div class="stat-label">HOLZ</div>
-                    <div class="stat-value" id="woodStat">0</div>
+                    <div class="stat-value" id="woodStat">0/20</div>
                 </div>
                 <div class="stat">
                     <div class="stat-label">BÄUME</div>
-                    <div class="stat-value" id="treesStat">0</div>
+                    <div class="stat-value" id="treesStat">10</div>
                 </div>
                 <div class="stat">
                     <div class="stat-label">PUNKTE</div>
@@ -191,7 +191,7 @@
                 </div>
 
                 <div class="objective" id="objective">
-                    Tippe auf die Bäume um Holz zu sammeln!
+                    Tippe 2x auf jeden Baum! Jeder Baum gibt 2 Holz. Brauchst 20 Holz total!
                 </div>
             </div>
         </div>
@@ -240,8 +240,7 @@
             score: 0,
             phase: PHASES.BUILDING,
             wood: 0,
-            horseBuildProgress: 0,
-            horseMaxWood: 100,
+            woodNeeded: 20,
             guards: 0,
             gameOverReason: ''
         };
@@ -251,8 +250,7 @@
             y: canvas.height / 2,
             width: 80,
             height: 100,
-            radius: 100,
-            health: 100
+            radius: 100
         };
 
         let trees = [];
@@ -263,7 +261,7 @@
         // Create trees
         function createTrees() {
             trees = [];
-            for (let i = 0; i < 8; i++) {
+            for (let i = 0; i < 10; i++) {
                 let x, y, valid;
                 do {
                     valid = true;
@@ -279,9 +277,9 @@
                     y: y,
                     width: 40,
                     height: 50,
-                    wood: 1,
+                    wood: 2,
                     taps: 0,
-                    maxTaps: 3
+                    maxTaps: 2
                 });
             }
         }
@@ -327,22 +325,20 @@
                     const dist = Math.sqrt((clickX - tree.x) ** 2 + (clickY - tree.y) ** 2);
                     if (dist < 30) {
                         tree.taps++;
-                        game.wood += tree.wood;
-                        spawnParticles(tree.x, tree.y, 3);
                         if (tree.taps >= tree.maxTaps) {
+                            game.wood += tree.wood;
+                            spawnParticles(tree.x, tree.y, 5);
                             trees.splice(idx, 1);
+                        } else {
+                            spawnParticles(tree.x, tree.y, 2);
                         }
                     }
                 });
 
-                // Check horse
-                const horseDist = Math.sqrt((clickX - horse.x) ** 2 + (clickY - horse.y) ** 2);
-                if (horseDist < 60 && game.wood >= 10) {
-                    game.wood -= 10;
-                    game.horseBuildProgress += 10;
-                    spawnParticles(horse.x, horse.y, 5);
-                    
-                    if (game.horseBuildProgress >= game.horseMaxWood) {
+                // Check horse - only clickable when have 20 wood
+                if (game.wood >= game.woodNeeded) {
+                    const horseDist = Math.sqrt((clickX - horse.x) ** 2 + (clickY - horse.y) ** 2);
+                    if (horseDist < 60) {
                         startPhase2();
                     }
                 }
@@ -363,7 +359,6 @@
         function startPhase2() {
             game.phase = PHASES.ESCAPING;
             spawnGuards();
-            horse.health = 100;
         }
 
         function startPhase3() {
@@ -509,6 +504,15 @@
             ctx.textBaseline = 'middle';
             ctx.fillText('🐴', horse.x, horse.y - 10);
 
+            // Draw horse glow when ready (Phase 1)
+            if (game.phase === PHASES.BUILDING && game.wood >= game.woodNeeded) {
+                ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(horse.x, horse.y, 80, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
             // Draw horse circle (Phase 2)
             if (game.phase === PHASES.ESCAPING) {
                 ctx.strokeStyle = 'rgba(0, 255, 0, 0.3)';
@@ -573,7 +577,7 @@
             let buildProgress = '';
             if (game.phase === PHASES.BUILDING) {
                 phaseText = 'PHASE 1: BAUE DAS PFERD';
-                buildProgress = `Holz: ${game.wood} | Fortschritt: ${Math.floor((game.horseBuildProgress / game.horseMaxWood) * 100)}%`;
+                buildProgress = `Holz: ${game.wood}/${game.woodNeeded}`;
             } else if (game.phase === PHASES.ESCAPING) {
                 phaseText = 'PHASE 2: BLEIB IM PFERD!';
                 buildProgress = `Wachen: ${guards.length}`;
@@ -589,7 +593,7 @@
 
         function updateUI() {
             document.getElementById('phaseStat').textContent = `${game.phase}/3`;
-            document.getElementById('woodStat').textContent = game.wood;
+            document.getElementById('woodStat').textContent = `${game.wood}/${game.woodNeeded}`;
             document.getElementById('treesStat').textContent = trees.length;
             document.getElementById('scoreStat').textContent = game.score;
             document.getElementById('guardsStat').textContent = guards.length;
@@ -600,7 +604,7 @@
             if (game.phase === PHASES.BUILDING) {
                 phaseDisplay.className += ' phase1';
                 phaseDisplay.textContent = '🌳 PHASE 1: SAMMLE HOLZ';
-                document.getElementById('objective').textContent = 'Tippe auf Bäume um Holz zu sammeln, dann klick auf das Pferd!';
+                document.getElementById('objective').textContent = `Tippe 2x auf jeden Baum! Du brauchst 20 Holz. (${game.wood}/${game.woodNeeded})`;
                 document.getElementById('guardStatBox').style.display = 'none';
             } else if (game.phase === PHASES.ESCAPING) {
                 phaseDisplay.className += ' phase2';
