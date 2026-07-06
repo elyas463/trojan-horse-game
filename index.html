@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trojanisches Pferd Spiel</title>
+    <title>Trojanisches Pferd - Survival</title>
     <style>
         * {
             margin: 0;
@@ -13,233 +13,240 @@
 
         body {
             font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            min-height: 100vh;
+            background: #0a0a0a;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .game-container {
             display: flex;
-            justify-content: center;
-            align-items: center;
+            height: 100vh;
+        }
+
+        #gameCanvas {
+            flex: 1;
+            background: linear-gradient(135deg, #1a0033 0%, #330000 100%);
+            cursor: crosshair;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #1a1a1a;
+            border-left: 3px solid #ffd700;
             padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
         }
 
-        .container {
-            width: 100%;
-            max-width: 1000px;
-        }
-
-        h1 {
-            text-align: center;
+        .sidebar h2 {
             color: #ffd700;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-            font-size: 2.5em;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #ffd700;
+            padding-bottom: 10px;
         }
 
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .stat-box {
+        .stat {
+            margin: 10px 0;
+            padding: 8px;
             background: rgba(255, 215, 0, 0.1);
-            border: 2px solid #ffd700;
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-            color: #ffd700;
+            border-left: 3px solid #ffd700;
+            border-radius: 3px;
         }
 
         .stat-label {
-            font-size: 0.9em;
-            opacity: 0.8;
-            margin-bottom: 5px;
+            font-size: 0.85em;
+            color: #aaa;
         }
 
         .stat-value {
-            font-size: 1.8em;
+            font-size: 1.3em;
+            color: #ffd700;
             font-weight: bold;
         }
 
-        canvas {
-            display: block;
-            margin: 20px auto;
-            background: linear-gradient(to bottom, #0f3460 0%, #1a1a2e 100%);
-            border: 3px solid #ffd700;
-            border-radius: 10px;
-            cursor: none;
+        .upgrades {
+            margin-top: 20px;
+            flex: 1;
+        }
+
+        .upgrade-btn {
             width: 100%;
-            max-width: 900px;
-            height: auto;
-            aspect-ratio: 16 / 9;
-        }
-
-        .controls {
-            background: rgba(0, 0, 0, 0.6);
-            border: 2px solid #ffd700;
-            border-radius: 10px;
-            padding: 20px;
-            color: #fff;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .controls h3 {
-            color: #ffd700;
-            margin-bottom: 10px;
-        }
-
-        .controls p {
+            padding: 10px;
             margin: 8px 0;
-            font-size: 0.95em;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 15px;
-        }
-
-        button {
             background: linear-gradient(135deg, #ffd700, #ffed4e);
             color: #000;
             border: none;
-            padding: 12px 30px;
-            font-size: 1em;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        .phase-info {
-            background: rgba(255, 215, 0, 0.1);
-            border-left: 4px solid #ffd700;
-            padding: 15px;
             border-radius: 5px;
-            color: #ffd700;
-            margin-bottom: 20px;
-            text-align: center;
-            font-size: 1.1em;
             font-weight: bold;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s;
         }
 
-        .game-over-screen {
+        .upgrade-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+        }
+
+        .upgrade-btn:disabled {
+            background: #444;
+            color: #888;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .upgrade-cost {
+            font-size: 0.75em;
+            opacity: 0.8;
+        }
+
+        .wave-info {
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid #ff3333;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .wave-info.active {
+            background: rgba(0, 255, 0, 0.1);
+            border-color: #00ff00;
+        }
+
+        .game-over-overlay {
             display: none;
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.95);
             z-index: 1000;
             justify-content: center;
             align-items: center;
             flex-direction: column;
+            text-align: center;
         }
 
         .game-over-content {
-            text-align: center;
             background: rgba(26, 26, 46, 0.95);
             padding: 40px;
             border-radius: 15px;
             border: 3px solid #ffd700;
         }
 
-        .game-over-content h2 {
+        .game-over-content h1 {
             font-size: 3em;
-            margin-bottom: 20px;
             color: #ffd700;
+            margin-bottom: 20px;
         }
 
         .game-over-content p {
-            font-size: 1.3em;
-            color: #fff;
-            margin-bottom: 15px;
+            font-size: 1.2em;
+            margin: 10px 0;
         }
 
-        .victory {
-            color: #4ecdc4;
+        .game-over-content button {
+            margin-top: 20px;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
         }
 
-        .defeat {
-            color: #ff6b6b;
-        }
-
-        @media (max-width: 600px) {
-            h1 {
-                font-size: 1.8em;
-            }
-
-            .stat-box {
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 150px;
                 padding: 10px;
             }
 
+            .sidebar h2 {
+                font-size: 1em;
+            }
+
             .stat-value {
-                font-size: 1.3em;
+                font-size: 1.1em;
+            }
+
+            .upgrade-btn {
+                font-size: 0.75em;
+                padding: 8px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🐴 TROJANISCHES PFERD 🐴</h1>
-
-        <div class="stats-container">
-            <div class="stat-box">
-                <div class="stat-label">PHASE</div>
-                <div class="stat-value" id="phaseDisplay">1/3</div>
+    <div class="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div class="sidebar">
+            <div>
+                <h2>STATS</h2>
+                <div class="stat">
+                    <div class="stat-label">LEBEN</div>
+                    <div class="stat-value" id="healthStat">100</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">PUNKTE</div>
+                    <div class="stat-value" id="scoreStat">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">WELLE</div>
+                    <div class="stat-value" id="waveStat">1</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">GOLD</div>
+                    <div class="stat-value" id="goldStat">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">FEINDE</div>
+                    <div class="stat-value" id="enemyStat">0</div>
+                </div>
             </div>
-            <div class="stat-box">
-                <div class="stat-label">LEBEN</div>
-                <div class="stat-value" id="healthDisplay">100</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">SOLDATEN</div>
-                <div class="stat-value" id="soldiersDisplay">0</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">PUNKTE</div>
-                <div class="stat-value" id="scoreDisplay">0</div>
-            </div>
-        </div>
 
-        <div class="phase-info" id="phaseInfo">
-            Phase 1: Baue das Pferd - Bewege dich mit PFEILEN oder WASD
-        </div>
+            <div class="wave-info" id="waveInfo">
+                Welle 1 startet...
+            </div>
 
-        <canvas id="gameCanvas" width="900" height="600"></canvas>
-
-        <div class="controls">
-            <h3>🎮 STEUERUNG</h3>
-            <p><strong>PFEILE / WASD</strong> - Bewegen</p>
-            <p><strong>LEERTASTE</strong> - Verstecken (nur Phase 2)</p>
-            <p><strong>KLICK / SCHUSS</strong> - Angreifen (nur Phase 3)</p>
-            <div class="button-group">
-                <button onclick="startGame()">SPIEL STARTEN</button>
-                <button onclick="resetGame()">NEUSTART</button>
+            <div class="upgrades">
+                <h2>UPGRADES</h2>
+                <button class="upgrade-btn" onclick="upgradeAttack()">
+                    🔥 Schaden+<br>
+                    <span class="upgrade-cost">Gold: <span id="damageGold">50</span></span>
+                </button>
+                <button class="upgrade-btn" onclick="upgradeFireRate()">
+                    ⚡ Schneller Schießen<br>
+                    <span class="upgrade-cost">Gold: <span id="fireGold">50</span></span>
+                </button>
+                <button class="upgrade-btn" onclick="upgradeRange()">
+                    📍 Reichweite+<br>
+                    <span class="upgrade-cost">Gold: <span id="rangeGold">50</span></span>
+                </button>
+                <button class="upgrade-btn" onclick="upgradeHealth()">
+                    ❤️ Leben+<br>
+                    <span class="upgrade-cost">Gold: <span id="healthGold">75</span></span>
+                </button>
+                <button class="upgrade-btn" onclick="upgradeAutoShoot()">
+                    🤖 Auto-Schießen<br>
+                    <span class="upgrade-cost">Gold: <span id="autoGold">100</span></span>
+                </button>
             </div>
         </div>
     </div>
 
-    <div class="game-over-screen" id="gameOverScreen">
+    <div class="game-over-overlay" id="gameOverOverlay">
         <div class="game-over-content">
-            <h2 id="gameOverTitle"></h2>
-            <p id="gameOverMessage"></p>
-            <p id="gameOverStats"></p>
-            <button onclick="resetGame()">Nochmal Spielen</button>
+            <h1 id="gameOverTitle">SPIEL VORBEI</h1>
+            <p id="gameOverScore">Punkte: 0</p>
+            <p id="gameOverWave">Welle erreicht: 1</p>
+            <p id="gameOverKills">Feinde besiegt: 0</p>
+            <button onclick="location.reload()">NOCHMAL SPIELEN</button>
         </div>
     </div>
 
@@ -247,398 +254,366 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Responsive canvas
         function resizeCanvas() {
-            const rect = canvas.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
+            canvas.width = window.innerWidth - 250;
+            canvas.height = window.innerHeight;
         }
-        window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
-
-        // Game states
-        const PHASES = {
-            BUILDING: 1,
-            SNEAKING: 2,
-            ATTACKING: 3
-        };
+        window.addEventListener('resize', resizeCanvas);
 
         // Game variables
-        let gameRunning = false;
-        let gameOver = false;
-        let currentPhase = PHASES.BUILDING;
-        let playerHealth = 100;
-        let maxHealth = 100;
-        let soldierCount = 0;
-        let score = 0;
-        let time = 0;
-
-        // Player
+        let gameRunning = true;
+        let gameTime = 0;
         let player = {
             x: canvas.width / 2,
-            y: canvas.height - 100,
-            width: 30,
-            height: 40,
-            speed: 5,
-            hiding: false,
-            health: maxHealth
+            y: canvas.height / 2,
+            width: 25,
+            height: 25,
+            speed: 6,
+            health: 100,
+            maxHealth: 100,
+            damage: 10,
+            fireRate: 0.1,
+            shootCooldown: 0,
+            range: 150,
+            autoShoot: false,
+            kills: 0
         };
 
-        // Keys
-        let keys = {
-            ArrowUp: false,
-            ArrowDown: false,
-            ArrowLeft: false,
-            ArrowRight: false,
-            w: false,
-            a: false,
-            s: false,
-            d: false,
-            ' ': false
+        let game = {
+            score: 0,
+            gold: 0,
+            wave: 1,
+            waveTime: 0,
+            waveMaxTime: 120,
+            enemyCount: 0
         };
 
-        // Enemies
         let enemies = [];
-        let bullets = [];
+        let particles = [];
+        let mouse = { x: 0, y: 0 };
 
-        // Event listeners
-        document.addEventListener('keydown', (e) => {
-            if (e.key in keys) keys[e.key] = true;
-            if (e.key === ' ') e.preventDefault();
+        // Input
+        let keys = {};
+        document.addEventListener('keydown', (e) => keys[e.key] = true);
+        document.addEventListener('keyup', (e) => keys[e.key] = false);
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
+        });
+        canvas.addEventListener('click', () => {
+            shootInDirection(mouse.x - player.x, mouse.y - player.y);
         });
 
-        document.addEventListener('keyup', (e) => {
-            if (e.key in keys) keys[e.key] = false;
-        });
+        // Upgrades
+        let upgradeLevels = {
+            damage: 0,
+            fireRate: 0,
+            range: 0,
+            health: 0,
+            autoShoot: false
+        };
 
-        canvas.addEventListener('click', (e) => {
-            if (currentPhase === PHASES.ATTACKING && gameRunning) {
-                const rect = canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                shootBullet(x, y);
-            }
-        });
+        let upgradeCosts = {
+            damage: 50,
+            fireRate: 50,
+            range: 50,
+            health: 75,
+            autoShoot: 100
+        };
 
-        function startGame() {
-            gameRunning = true;
-            gameOver = false;
-            currentPhase = PHASES.BUILDING;
-            playerHealth = 100;
-            soldierCount = 0;
-            score = 0;
-            time = 0;
-            player.x = canvas.width / 2;
-            player.y = canvas.height - 100;
-            player.hiding = false;
-            enemies = [];
-            bullets = [];
-            document.getElementById('gameOverScreen').style.display = 'none';
-            spawnEnemies();
-            gameLoop();
-        }
-
-        function resetGame() {
-            gameRunning = false;
-            gameOver = false;
-            currentPhase = PHASES.BUILDING;
-            playerHealth = 100;
-            soldierCount = 0;
-            score = 0;
-            enemies = [];
-            bullets = [];
-            updateUI();
-            draw();
-        }
-
-        function spawnEnemies() {
-            enemies = [];
-            if (currentPhase === PHASES.BUILDING) {
-                for (let i = 0; i < 3; i++) {
-                    enemies.push({
-                        x: Math.random() * (canvas.width - 40),
-                        y: Math.random() * (canvas.height - 200),
-                        width: 30,
-                        height: 30,
-                        speedX: (Math.random() - 0.5) * 3,
-                        speedY: (Math.random() - 0.5) * 3,
-                        type: 'guard'
-                    });
-                }
-            } else if (currentPhase === PHASES.SNEAKING) {
-                for (let i = 0; i < 5; i++) {
-                    enemies.push({
-                        x: Math.random() * (canvas.width - 40),
-                        y: Math.random() * (canvas.height - 200),
-                        width: 25,
-                        height: 25,
-                        speedX: (Math.random() - 0.5) * 2,
-                        speedY: (Math.random() - 0.5) * 2,
-                        type: 'scout',
-                        sightRange: 150
-                    });
-                }
-            } else if (currentPhase === PHASES.ATTACKING) {
-                for (let i = 0; i < 8; i++) {
-                    enemies.push({
-                        x: Math.random() * (canvas.width - 40),
-                        y: Math.random() * (canvas.height - 100),
-                        width: 25,
-                        height: 25,
-                        speedX: (Math.random() - 0.5) * 4,
-                        speedY: (Math.random() - 0.5) * 4,
-                        type: 'enemy',
-                        health: 2
-                    });
-                }
+        function upgradeAttack() {
+            if (game.gold >= upgradeCosts.damage) {
+                game.gold -= upgradeCosts.damage;
+                player.damage += 5;
+                upgradeLevels.damage++;
+                upgradeCosts.damage += 25;
+                document.getElementById('damageGold').textContent = upgradeCosts.damage;
             }
         }
 
-        function shootBullet(x, y) {
-            const dx = x - player.x;
-            const dy = y - player.y;
+        function upgradeFireRate() {
+            if (game.gold >= upgradeCosts.fireRate) {
+                game.gold -= upgradeCosts.fireRate;
+                player.fireRate += 0.05;
+                upgradeLevels.fireRate++;
+                upgradeCosts.fireRate += 25;
+                document.getElementById('fireGold').textContent = upgradeCosts.fireRate;
+            }
+        }
+
+        function upgradeRange() {
+            if (game.gold >= upgradeCosts.range) {
+                game.gold -= upgradeCosts.range;
+                player.range += 30;
+                upgradeLevels.range++;
+                upgradeCosts.range += 25;
+                document.getElementById('rangeGold').textContent = upgradeCosts.range;
+            }
+        }
+
+        function upgradeHealth() {
+            if (game.gold >= upgradeCosts.health) {
+                game.gold -= upgradeCosts.health;
+                player.maxHealth += 30;
+                player.health = player.maxHealth;
+                upgradeLevels.health++;
+                upgradeCosts.health += 40;
+                document.getElementById('healthGold').textContent = upgradeCosts.health;
+            }
+        }
+
+        function upgradeAutoShoot() {
+            if (game.gold >= upgradeCosts.autoShoot && !upgradeLevels.autoShoot) {
+                game.gold -= upgradeCosts.autoShoot;
+                player.autoShoot = true;
+                upgradeLevels.autoShoot = true;
+                document.querySelector('.upgrade-btn:nth-child(5)').disabled = true;
+            }
+        }
+
+        // Spawn enemies
+        function spawnWave() {
+            const count = 5 + game.wave * 3;
+            for (let i = 0; i < count; i++) {
+                const angle = (Math.random() * Math.PI * 2);
+                const distance = 300 + Math.random() * 100;
+                enemies.push({
+                    x: player.x + Math.cos(angle) * distance,
+                    y: player.y + Math.sin(angle) * distance,
+                    width: 15,
+                    height: 15,
+                    speed: 2 + game.wave * 0.3,
+                    health: 1 + game.wave * 0.5,
+                    maxHealth: 1 + game.wave * 0.5,
+                    type: Math.random() > 0.7 ? 'strong' : 'normal'
+                });
+            }
+            game.enemyCount = enemies.length;
+        }
+
+        // Shooting
+        function shootInDirection(dx, dy) {
             const dist = Math.sqrt(dx * dx + dy * dy);
-            bullets.push({
-                x: player.x,
-                y: player.y,
-                vx: (dx / dist) * 7,
-                vy: (dy / dist) * 7,
-                life: 100
-            });
+            if (dist === 0) return;
+
+            for (let i = 0; i < 3; i++) {
+                const angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.3;
+                enemies.forEach((enemy) => {
+                    const edx = enemy.x - player.x;
+                    const edy = enemy.y - player.y;
+                    const eDist = Math.sqrt(edx * edx + edy * edy);
+                    
+                    if (eDist < player.range) {
+                        const eAngle = Math.atan2(edy, edx);
+                        const angleDiff = Math.abs(angle - eAngle);
+                        
+                        if (angleDiff < 0.3 || angleDiff > Math.PI * 2 - 0.3) {
+                            enemy.health -= player.damage;
+                            if (enemy.health <= 0) {
+                                game.score += 10 + game.wave * 5;
+                                game.gold += 10 + game.wave * 2;
+                                player.kills++;
+                                spawnParticles(enemy.x, enemy.y, 5);
+                                enemies = enemies.filter(e => e !== enemy);
+                                game.enemyCount--;
+                            }
+                        }
+                    }
+                });
+            }
         }
 
-        function update() {
-            if (!gameRunning || gameOver) return;
+        // Particles
+        function spawnParticles(x, y, count) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: (Math.random() - 0.5) * 4,
+                    life: 30,
+                    maxLife: 30
+                });
+            }
+        }
 
-            time++;
+        // Update
+        function update() {
+            if (!gameRunning) return;
+
+            gameTime++;
+            game.waveTime++;
 
             // Player movement
             let moveX = 0;
             let moveY = 0;
+            if (keys['ArrowUp'] || keys['w']) moveY -= player.speed;
+            if (keys['ArrowDown'] || keys['s']) moveY += player.speed;
+            if (keys['ArrowLeft'] || keys['a']) moveX -= player.speed;
+            if (keys['ArrowRight'] || keys['d']) moveX += player.speed;
 
-            if (keys.ArrowUp || keys.w) moveY -= player.speed;
-            if (keys.ArrowDown || keys.s) moveY += player.speed;
-            if (keys.ArrowLeft || keys.a) moveX -= player.speed;
-            if (keys.ArrowRight || keys.d) moveX += player.speed;
-
-            // Hiding (Phase 2)
-            if (keys[' '] && currentPhase === PHASES.SNEAKING) {
-                player.hiding = true;
-            } else {
-                player.hiding = false;
+            const len = Math.sqrt(moveX * moveX + moveY * moveY);
+            if (len > 0) {
+                moveX = (moveX / len) * player.speed;
+                moveY = (moveY / len) * player.speed;
             }
 
-            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x + moveX));
-            player.y = Math.max(0, Math.min(canvas.height - player.height, player.y + moveY));
+            player.x = Math.max(10, Math.min(canvas.width - 10, player.x + moveX));
+            player.y = Math.max(10, Math.min(canvas.height - 10, player.y + moveY));
 
-            // Update enemies
-            enemies.forEach((enemy, idx) => {
-                enemy.x += enemy.speedX;
-                enemy.y += enemy.speedY;
-
-                // Boundary
-                if (enemy.x < 0 || enemy.x > canvas.width - enemy.width) enemy.speedX *= -1;
-                if (enemy.y < 0 || enemy.y > canvas.height - enemy.height) enemy.speedY *= -1;
-
-                // Collision with player
-                if (rectCollide(player, enemy)) {
-                    if (currentPhase === PHASES.SNEAKING && player.hiding) {
-                        // Hiding works
-                    } else {
-                        playerHealth -= 2;
-                        enemy.speedX *= -1;
-                        enemy.speedY *= -1;
-                    }
-                }
-            });
-
-            // Update bullets
-            bullets.forEach((bullet, idx) => {
-                bullet.x += bullet.vx;
-                bullet.y += bullet.vy;
-                bullet.life--;
-
-                if (bullet.life <= 0) {
-                    bullets.splice(idx, 1);
-                    return;
-                }
-
-                // Bullet-enemy collision
-                enemies.forEach((enemy, eidx) => {
-                    if (rectCollide(bullet, enemy)) {
-                        enemy.health = (enemy.health || 1) - 1;
-                        if (enemy.health <= 0) {
-                            enemies.splice(eidx, 1);
-                            score += 10;
+            // Auto shoot
+            if (player.autoShoot) {
+                player.shootCooldown--;
+                if (player.shootCooldown <= 0) {
+                    let closest = null;
+                    let minDist = player.range;
+                    
+                    enemies.forEach(enemy => {
+                        const dx = enemy.x - player.x;
+                        const dy = enemy.y - player.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < minDist) {
+                            minDist = dist;
+                            closest = enemy;
                         }
-                        bullets.splice(idx, 1);
-                    }
-                });
-            });
+                    });
 
-            // Phase progression
-            if (currentPhase === PHASES.BUILDING && time > 300) {
-                if (enemies.length === 0) {
-                    soldierCount += 5;
-                    currentPhase = PHASES.SNEAKING;
-                    spawnEnemies();
-                    time = 0;
+                    if (closest) {
+                        shootInDirection(closest.x - player.x, closest.y - player.y);
+                    }
+                    player.shootCooldown = 1 / player.fireRate;
                 }
-            } else if (currentPhase === PHASES.SNEAKING && time > 400) {
-                if (enemies.length === 0) {
-                    soldierCount += 5;
-                    currentPhase = PHASES.ATTACKING;
-                    spawnEnemies();
-                    time = 0;
-                }
-            } else if (currentPhase === PHASES.ATTACKING && enemies.length === 0) {
-                endGame(true);
             }
 
-            if (playerHealth <= 0) {
-                endGame(false);
+            // Enemy AI
+            enemies.forEach(enemy => {
+                const dx = player.x - enemy.x;
+                const dy = player.y - enemy.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist > 0) {
+                    enemy.x += (dx / dist) * enemy.speed;
+                    enemy.y += (dy / dist) * enemy.speed;
+                }
+
+                // Collision
+                if (Math.abs(enemy.x - player.x) < 20 && Math.abs(enemy.y - player.y) < 20) {
+                    player.health -= 0.5;
+                }
+            });
+
+            // Update particles
+            particles = particles.filter(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                return p.life > 0;
+            });
+
+            // Wave progression
+            if (game.waveTime > game.waveMaxTime) {
+                game.wave++;
+                game.waveTime = 0;
+                spawnWave();
+            }
+
+            // Game over
+            if (player.health <= 0) {
+                endGame();
             }
 
             updateUI();
         }
 
-        function rectCollide(a, b) {
-            return a.x < b.x + b.width &&
-                   a.x + a.width > b.x &&
-                   a.y < b.y + b.height &&
-                   a.y + a.height > b.y;
-        }
-
+        // Draw
         function draw() {
-            ctx.fillStyle = 'linear-gradient(to bottom, #0f3460, #1a1a2e)';
+            ctx.fillStyle = 'rgba(26, 0, 51, 0.1)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw phase info
-            ctx.fillStyle = '#ffd700';
-            ctx.font = 'bold 20px Arial';
-            ctx.textAlign = 'left';
-            if (currentPhase === PHASES.BUILDING) {
-                ctx.fillText('⏗ Phase 1: Bau das Pferd', 20, 40);
-            } else if (currentPhase === PHASES.SNEAKING) {
-                ctx.fillText('🤫 Phase 2: Schleiche dich ein', 20, 40);
-            } else if (currentPhase === PHASES.ATTACKING) {
-                ctx.fillText('⚔️ Phase 3: Angriff!', 20, 40);
-            }
+            // Draw range indicator
+            ctx.strokeStyle = 'rgba(255, 215, 0, 0.2)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.range, 0, Math.PI * 2);
+            ctx.stroke();
 
             // Draw player
-            ctx.fillStyle = player.hiding ? '#ffaa00' : '#0099ff';
-            if (player.hiding) {
-                ctx.globalAlpha = 0.5;
-            }
-            ctx.fillRect(player.x, player.y, player.width, player.height);
-            ctx.globalAlpha = 1;
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 20px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('🗡️', player.x + player.width / 2, player.y + player.height / 2 + 5);
+            ctx.fillStyle = '#00ff00';
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.width / 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw health bar
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(player.x - 20, player.y - 35, 40, 5);
+            ctx.fillStyle = '#00ff00';
+            ctx.fillRect(player.x - 20, player.y - 35, (player.health / player.maxHealth) * 40, 5);
 
             // Draw enemies
             enemies.forEach(enemy => {
-                if (enemy.type === 'guard') {
-                    ctx.fillStyle = '#ff3333';
-                    ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
-                    ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 18px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('🛡️', enemy.x + enemy.width / 2, enemy.y + enemy.height / 2 + 4);
-                } else if (enemy.type === 'scout') {
-                    ctx.fillStyle = '#ff9900';
-                    ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
-                    ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 16px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('👁️', enemy.x + enemy.width / 2, enemy.y + enemy.height / 2 + 3);
+                if (enemy.type === 'strong') {
+                    ctx.fillStyle = '#ff6600';
                 } else {
-                    ctx.fillStyle = '#dd0000';
-                    ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
-                    ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 16px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('💀', enemy.x + enemy.width / 2, enemy.y + enemy.height / 2 + 3);
+                    ctx.fillStyle = '#ff0000';
                 }
+                ctx.fillRect(enemy.x - enemy.width / 2, enemy.y - enemy.height / 2, enemy.width, enemy.height);
+
+                // Enemy health
+                ctx.fillStyle = '#ff0000';
+                ctx.fillRect(enemy.x - 10, enemy.y - 20, 20, 3);
+                ctx.fillStyle = '#00ff00';
+                ctx.fillRect(enemy.x - 10, enemy.y - 20, (enemy.health / enemy.maxHealth) * 20, 3);
             });
 
-            // Draw bullets
-            bullets.forEach(bullet => {
-                ctx.fillStyle = '#ffff00';
-                ctx.fillRect(bullet.x - 3, bullet.y - 3, 6, 6);
+            // Draw particles
+            particles.forEach(p => {
+                ctx.fillStyle = `rgba(255, 215, 0, ${p.life / p.maxLife})`;
+                ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
             });
 
-            // Draw crosshair for phase 3
-            if (currentPhase === PHASES.ATTACKING) {
-                ctx.strokeStyle = '#ffd700';
-                ctx.lineWidth = 2;
-                ctx.globalAlpha = 0.5;
-                ctx.beginPath();
-                ctx.arc(player.x + player.width / 2, player.y + player.height / 2, 20, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.globalAlpha = 1;
-            }
+            // Draw wave info
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`WELLE ${game.wave}`, canvas.width / 2, 50);
 
-            // Draw hiding indicator
-            if (player.hiding) {
-                ctx.fillStyle = '#ffaa00';
-                ctx.font = 'bold 16px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('VERSTECKT', player.x + player.width / 2, player.y - 15);
-            }
+            // Draw combo
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText(`Enemies: ${game.enemyCount}`, canvas.width / 2, 80);
         }
 
         function updateUI() {
-            document.getElementById('phaseDisplay').textContent = `${currentPhase}/3`;
-            document.getElementById('healthDisplay').textContent = playerHealth;
-            document.getElementById('soldiersDisplay').textContent = soldierCount;
-            document.getElementById('scoreDisplay').textContent = score;
+            document.getElementById('healthStat').textContent = Math.max(0, Math.floor(player.health));
+            document.getElementById('scoreStat').textContent = game.score;
+            document.getElementById('waveStat').textContent = game.wave;
+            document.getElementById('goldStat').textContent = game.gold;
+            document.getElementById('enemyStat').textContent = game.enemyCount;
 
-            if (currentPhase === PHASES.BUILDING) {
-                document.getElementById('phaseInfo').textContent = `Phase 1: Besiege alle Wachen - Feinde: ${enemies.length}`;
-            } else if (currentPhase === PHASES.SNEAKING) {
-                document.getElementById('phaseInfo').textContent = `Phase 2: Schleiche dich vorbei - Drücke LEERTASTE zum Verstecken - Feinde: ${enemies.length}`;
-            } else if (currentPhase === PHASES.ATTACKING) {
-                document.getElementById('phaseInfo').textContent = `Phase 3: Angriff! - Klick zum Schießen - Feinde: ${enemies.length}`;
-            }
+            const waveInfo = document.getElementById('waveInfo');
+            const progress = Math.floor((game.waveTime / game.waveMaxTime) * 100);
+            waveInfo.textContent = `Welle ${game.wave}: ${progress}%`;
         }
 
-        function endGame(victory) {
+        function endGame() {
             gameRunning = false;
-            gameOver = true;
-
-            const screen = document.getElementById('gameOverScreen');
-            const title = document.getElementById('gameOverTitle');
-            const message = document.getElementById('gameOverMessage');
-            const stats = document.getElementById('gameOverStats');
-
-            screen.style.display = 'flex';
-
-            if (victory) {
-                title.textContent = '🎉 SIEG! 🎉';
-                title.className = 'victory';
-                message.textContent = 'Du hast Troy erobert!';
-                stats.textContent = `Punkte: ${score} | Soldaten: ${soldierCount}`;
-            } else {
-                title.textContent = '💀 NIEDERLAGE 💀';
-                title.className = 'defeat';
-                message.textContent = 'Du wurdest besiegt!';
-                stats.textContent = `Punkte: ${score} | Soldaten: ${soldierCount}`;
-            }
+            document.getElementById('gameOverOverlay').style.display = 'flex';
+            document.getElementById('gameOverTitle').textContent = '💀 SPIEL VORBEI 💀';
+            document.getElementById('gameOverScore').textContent = `Punkte: ${game.score}`;
+            document.getElementById('gameOverWave').textContent = `Welle erreicht: ${game.wave}`;
+            document.getElementById('gameOverKills').textContent = `Feinde besiegt: ${player.kills}`;
         }
 
         function gameLoop() {
             update();
             draw();
-            if (gameRunning) {
-                requestAnimationFrame(gameLoop);
-            }
+            requestAnimationFrame(gameLoop);
         }
 
-        // Start with instructions
-        updateUI();
-        draw();
+        // Start
+        spawnWave();
+        gameLoop();
     </script>
 </body>
 </html>
