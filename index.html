@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trojan Horse Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        #gameCanvas {
+            border: 3px solid #333;
+            display: block;
+            margin: 20px auto;
+            background: #87ceeb;
+            cursor: pointer;
+        }
+
+        .game-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .info-box {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .info-box p {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .controls {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 2px solid #ddd;
+        }
+
+        .controls h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .controls p {
+            margin: 8px 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #764ba2;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .message {
+            text-align: center;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .message.info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 2px solid #1976d2;
+        }
+
+        .message.success {
+            background: #e8f5e9;
+            color: #388e3c;
+            border: 2px solid #388e3c;
+        }
+
+        .message.error {
+            background: #ffebee;
+            color: #d32f2f;
+            border: 2px solid #d32f2f;
+        }
+
+        .message.warning {
+            background: #fff3e0;
+            color: #f57c00;
+            border: 2px solid #f57c00;
+        }
+
+        @media (max-width: 600px) {
+            .game-info {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            #gameCanvas {
+                max-width: 100%;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐴 Trojan Horse Game 🐴</h1>
+        <p class="subtitle">Build the horse, sneak soldiers inside, and defeat Troy!</p>
+        
+        <canvas id="gameCanvas" width="700" height="400"></canvas>
+
+        <div class="game-info">
+            <div class="info-box">
+                <h3>SOLDIERS IN HORSE</h3>
+                <p id="soldierCount">0</p>
+            </div>
+            <div class="info-box">
+                <h3>TROY POPULATION</h3>
+                <p id="troyHealth">50</p>
+            </div>
+            <div class="info-box">
+                <h3>GAME STAGE</h3>
+                <p id="gameStage">Building</p>
+            </div>
+        </div>
+
+        <div id="message"></div>
+
+        <div class="controls">
+            <h3>Controls:</h3>
+            <p><strong>Click on the horse</strong> to add soldiers inside</p>
+            <p><strong>When horse is full</strong>, click to send it to Troy</p>
+            <p><strong>Gate:</strong> Click on the gate to open it and unleash soldiers</p>
+            <button onclick="addSoldiers()">+ Add 5 Soldiers</button>
+            <button onclick="sendHorse()">Send Horse to Troy</button>
+            <button onclick="openGate()">Open Gate!</button>
+            <button onclick="resetGame()">New Game</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game states
+        const STATES = {
+            BUILDING: 'building',
+            SENDING: 'sending',
+            ARRIVING: 'arriving',
+            ATTACKING: 'attacking',
+            WON: 'won',
+            LOST: 'lost'
+        };
+
+        // Game variables
+        let gameState = STATES.BUILDING;
+        let soldiersInHorse = 0;
+        let maxSoldiers = 50;
+        let troyPopulation = 50;
+        let horseX = 150;
+        let horseY = 300;
+        let targetHorseX = 500;
+        let targetHorseY = 100;
+        let gateOpen = false;
+        let soldierHealth = 5;
+
+        // Enemy soldiers
+        let enemies = [];
+        let activeAttack = false;
+
+        // Animation
+        let frame = 0;
+
+        function resetGame() {
+            gameState = STATES.BUILDING;
+            soldiersInHorse = 0;
+            troyPopulation = 50;
+            horseX = 150;
+            horseY = 300;
+            targetHorseX = 500;
+            targetHorseY = 100;
+            gateOpen = false;
+            enemies = [];
+            activeAttack = false;
+            showMessage('Game reset! Start building the horse.', 'info');
+            updateUI();
+        }
+
+        function addSoldiers() {
+            if (gameState !== STATES.BUILDING) {
+                showMessage('You can only add soldiers during the building phase!', 'warning');
+                return;
+            }
+            
+            if (soldiersInHorse + 5 <= maxSoldiers) {
+                soldiersInHorse += 5;
+                showMessage(`Added 5 soldiers! (${soldiersInHorse}/${maxSoldiers})`, 'info');
+            } else {
+                showMessage('Horse is full! Send it to Troy.', 'warning');
+            }
+            updateUI();
+        }
+
+        function sendHorse() {
+            if (gameState !== STATES.BUILDING) {
+                showMessage('Horse is already on its way!', 'warning');
+                return;
+            }
+            
+            if (soldiersInHorse < 10) {
+                showMessage('You need at least 10 soldiers! Add more.', 'warning');
+                return;
+            }
+            
+            gameState = STATES.SENDING;
+            showMessage(`🐴 Sending ${soldiersInHorse} soldiers toward Troy!`, 'info');
+            updateUI();
+        }
+
+        function openGate() {
+            if (gameState !== STATES.ARRIVING) {
+                showMessage('You can only open the gate when the horse arrives!', 'warning');
+                return;
+            }
+            
+            gateOpen = true;
+            activeAttack = true;
+            gameState = STATES.ATTACKING;
+            
+            // Create enemy soldiers to fight
+            for (let i = 0; i < troyPopulation; i++) {
+                enemies.push({
+                    x: 550 + Math.random() * 100,
+                    y: 50 + Math.random() * 150,
+                    size: 8,
+                    health: soldierHealth
+                });
+            }
+            
+            showMessage('⚔️ BATTLE STARTED! Soldiers vs Troy Population!', 'warning');
+            updateUI();
+        }
+
+        function showMessage(text, type) {
+            const msgDiv = document.getElementById('message');
+            msgDiv.textContent = text;
+            msgDiv.className = `message ${type}`;
+        }
+
+        function updateUI() {
+            document.getElementById('soldierCount').textContent = soldiersInHorse;
+            document.getElementById('troyHealth').textContent = troyPopulation;
+            document.getElementById('gameStage').textContent = gameState.toUpperCase();
+        }
+
+        function drawHorse(x, y) {
+            ctx.fillStyle = '#8B4513';
+            // Body
+            ctx.fillRect(x - 30, y - 20, 60, 40);
+            // Head
+            ctx.fillRect(x + 25, y - 25, 20, 25);
+            // Legs
+            ctx.fillRect(x - 25, y + 20, 12, 25);
+            ctx.fillRect(x - 5, y + 20, 12, 25);
+            ctx.fillRect(x + 15, y + 20, 12, 25);
+            ctx.fillRect(x + 35, y + 20, 12, 25);
+            
+            // Draw soldier count inside
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(soldiersInHorse, x, y);
+        }
+
+        function drawTroy(x, y) {
+            ctx.fillStyle = '#DC143C';
+            // Walls
+            ctx.fillRect(x - 50, y - 30, 100, 60);
+            
+            // Gate
+            ctx.fillStyle = gateOpen ? '#32CD32' : '#FFD700';
+            ctx.fillRect(x - 15, y - 5, 30, 40);
+            
+            // Tower
+            ctx.fillStyle = '#8B0000';
+            ctx.fillRect(x - 40, y - 50, 20, 30);
+            ctx.fillRect(x + 20, y - 50, 20, 30);
+        }
+
+        function drawSoldier(x, y, health) {
+            ctx.fillStyle = health > 2 ? '#0000FF' : '#FF6347';
+            ctx.fillRect(x - 4, y - 4, 8, 8);
+        }
+
+        function drawGame() {
+            // Clear canvas
+            ctx.fillStyle = '#87ceeb';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw ground
+            ctx.fillStyle = '#90EE90';
+            ctx.fillRect(0, 350, canvas.width, 50);
+            
+            // Draw horse
+            drawHorse(horseX, horseY);
+            
+            // Draw Troy
+            drawTroy(550, 150);
+            
+            // Draw enemies
+            enemies.forEach(enemy => {
+                drawSoldier(enemy.x, enemy.y, enemy.health);
+            });
+            
+            // Draw status text
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'left';
+            
+            if (gameState === STATES.BUILDING) {
+                ctx.fillText('PHASE 1: Building the Horse', 20, 30);
+            } else if (gameState === STATES.SENDING) {
+                ctx.fillText('PHASE 2: Sending Horse to Troy', 20, 30);
+            } else if (gameState === STATES.ARRIVING) {
+                ctx.fillText('PHASE 3: Horse Arrived! Open Gate!', 20, 30);
+            } else if (gameState === STATES.ATTACKING) {
+                ctx.fillText(`BATTLE: ${enemies.length} enemies left`, 20, 30);
+            } else if (gameState === STATES.WON) {
+                ctx.fillStyle = '#00AA00';
+                ctx.font = 'bold 30px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('🎉 YOU WON! 🎉', canvas.width / 2, canvas.height / 2);
+            } else if (gameState === STATES.LOST) {
+                ctx.fillStyle = '#AA0000';
+                ctx.font = 'bold 30px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('💀 YOU LOST! 💀', canvas.width / 2, canvas.height / 2);
+            }
+        }
+
+        function update() {
+            // Move horse to Troy
+            if (gameState === STATES.SENDING) {
+                if (horseX < targetHorseX) {
+                    horseX += 2;
+                } else if (horseY > targetHorseY) {
+                    horseY -= 1;
+                } else {
+                    gameState = STATES.ARRIVING;
+                    showMessage('🐴 Horse arrived at Troy! Click "Open Gate!" to unleash soldiers!', 'warning');
+                }
+            }
+            
+            // Battle simulation
+            if (gameState === STATES.ATTACKING && activeAttack) {
+                // Random soldiers attack enemies
+                if (Math.random() < 0.1 && enemies.length > 0) {
+                    let randomEnemy = enemies[Math.floor(Math.random() * enemies.length)];
+                    randomEnemy.health -= 1;
+                    
+                    if (randomEnemy.health <= 0) {
+                        enemies = enemies.filter(e => e !== randomEnemy);
+                        troyPopulation--;
+                    }
+                }
+                
+                // Enemies attack soldiers
+                if (Math.random() < 0.05 && soldiersInHorse > 0) {
+                    soldiersInHorse -= 1;
+                }
+                
+                // Check win/lose conditions
+                if (enemies.length === 0 && troyPopulation <= 0) {
+                    gameState = STATES.WON;
+                    showMessage('🏆 VICTORY! You conquered Troy with the Trojan Horse!', 'success');
+                    activeAttack = false;
+                } else if (soldiersInHorse <= 0) {
+                    gameState = STATES.LOST;
+                    showMessage('💀 DEFEAT! Your soldiers were defeated!', 'error');
+                    activeAttack = false;
+                }
+            }
+            
+            updateUI();
+            drawGame();
+        }
+
+        function gameLoop() {
+            update();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Canvas click to add soldiers (alternative)
+        canvas.addEventListener('click', function(e) {
+            if (gameState === STATES.BUILDING) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Check if clicking on horse
+                if (x > horseX - 40 && x < horseX + 40 && y > horseY - 30 && y < horseY + 50) {
+                    addSoldiers();
+                }
+            }
+        });
+
+        // Start game
+        gameLoop();
+        showMessage('Welcome! Add soldiers to the horse, then send it to Troy!', 'info');
+        updateUI();
+    </script>
+</body>
+</html>
