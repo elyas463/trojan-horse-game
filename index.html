@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trojan Horse Game</title>
+    <title>Trojanisches Pferd Spiel</title>
     <style>
         * {
             margin: 0;
@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -22,160 +22,19 @@
         }
 
         .container {
-            background: rgba(0, 0, 0, 0.9);
-            border-radius: 15px;
-            padding: 40px;
-            max-width: 900px;
             width: 100%;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-            color: #fff;
+            max-width: 1000px;
         }
 
         h1 {
             text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
             color: #ffd700;
+            margin-bottom: 20px;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+            font-size: 2.5em;
         }
 
-        .game-board {
-            background: linear-gradient(to bottom, #87ceeb 0%, #e0f6ff 100%);
-            border: 3px solid #8b7355;
-            border-radius: 10px;
-            padding: 30px;
-            margin-bottom: 30px;
-            min-height: 400px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .game-board::before {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 80px;
-            background: linear-gradient(to top, #8b7355, transparent);
-            pointer-events: none;
-        }
-
-        .phase-container {
-            text-align: center;
-            z-index: 10;
-        }
-
-        .phase-title {
-            font-size: 2em;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        .horse {
-            font-size: 150px;
-            margin: 20px 0;
-            animation: bounce 2s infinite;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-        }
-
-        .soldiers {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-
-        .soldier {
-            font-size: 40px;
-            animation: hide 1s infinite;
-        }
-
-        @keyframes hide {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        .attack {
-            font-size: 60px;
-            margin: 20px 0;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 30px;
-            background: #333;
-            border-radius: 15px;
-            overflow: hidden;
-            margin: 20px 0;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ff6b6b, #ffd700, #4ecdc4);
-            width: 0%;
-            transition: width 0.5s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #000;
-            font-weight: bold;
-        }
-
-        .status {
-            font-size: 1.2em;
-            color: #333;
-            margin-top: 20px;
-            font-weight: bold;
-        }
-
-        .controls {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-
-        button {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            font-size: 1em;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: bold;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        button:disabled {
-            background: #666;
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-
-        .stats {
+        .stats-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 15px;
@@ -183,43 +42,132 @@
         }
 
         .stat-box {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 215, 0, 0.1);
             border: 2px solid #ffd700;
             border-radius: 10px;
             padding: 15px;
             text-align: center;
+            color: #ffd700;
         }
 
         .stat-label {
             font-size: 0.9em;
-            color: #aaa;
+            opacity: 0.8;
             margin-bottom: 5px;
         }
 
         .stat-value {
             font-size: 1.8em;
-            color: #ffd700;
             font-weight: bold;
         }
 
-        .game-over {
-            text-align: center;
-            padding: 30px;
-            background: rgba(0, 0, 0, 0.8);
-            border-radius: 10px;
+        canvas {
+            display: block;
+            margin: 20px auto;
+            background: linear-gradient(to bottom, #0f3460 0%, #1a1a2e 100%);
             border: 3px solid #ffd700;
-            margin-bottom: 20px;
+            border-radius: 10px;
+            cursor: none;
+            width: 100%;
+            max-width: 900px;
+            height: auto;
+            aspect-ratio: 16 / 9;
         }
 
-        .game-over h2 {
-            font-size: 2.5em;
+        .controls {
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid #ffd700;
+            border-radius: 10px;
+            padding: 20px;
+            color: #fff;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .controls h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        .controls p {
+            margin: 8px 0;
+            font-size: 0.95em;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #000;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1em;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .phase-info {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #ffd700;
+            padding: 15px;
+            border-radius: 5px;
+            color: #ffd700;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .game-over-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .game-over-content {
+            text-align: center;
+            background: rgba(26, 26, 46, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            border: 3px solid #ffd700;
+        }
+
+        .game-over-content h2 {
+            font-size: 3em;
             margin-bottom: 20px;
             color: #ffd700;
         }
 
-        .game-over p {
-            font-size: 1.2em;
-            margin-bottom: 10px;
+        .game-over-content p {
+            font-size: 1.3em;
+            color: #fff;
+            margin-bottom: 15px;
         }
 
         .victory {
@@ -231,266 +179,466 @@
         }
 
         @media (max-width: 600px) {
-            .container {
-                padding: 20px;
-            }
-
             h1 {
                 font-size: 1.8em;
             }
 
-            .horse {
-                font-size: 100px;
+            .stat-box {
+                padding: 10px;
             }
 
-            .phase-title {
-                font-size: 1.5em;
-            }
-
-            button {
-                padding: 10px 20px;
-                font-size: 0.9em;
+            .stat-value {
+                font-size: 1.3em;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🐴 TROJAN HORSE GAME 🐴</h1>
+        <h1>🐴 TROJANISCHES PFERD 🐴</h1>
 
-        <div class="stats">
+        <div class="stats-container">
             <div class="stat-box">
                 <div class="stat-label">PHASE</div>
-                <div class="stat-value" id="phaseNum">1/3</div>
+                <div class="stat-value" id="phaseDisplay">1/3</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">PROGRESS</div>
-                <div class="stat-value" id="progress">0%</div>
+                <div class="stat-label">LEBEN</div>
+                <div class="stat-value" id="healthDisplay">100</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">SOLDIERS INSIDE</div>
-                <div class="stat-value" id="soldiersInside">0</div>
+                <div class="stat-label">SOLDATEN</div>
+                <div class="stat-value" id="soldiersDisplay">0</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">ENEMIES DEFEATED</div>
-                <div class="stat-value" id="enemiesDefeated">0</div>
+                <div class="stat-label">PUNKTE</div>
+                <div class="stat-value" id="scoreDisplay">0</div>
             </div>
         </div>
 
-        <div class="game-board" id="gameBoard">
-            <div class="phase-container" id="phaseContainer">
-                <div class="phase-title" id="phaseTitle">Phase 1: Build the Horse</div>
-                <div class="horse">🐴</div>
-                <div class="status" id="status">Click "Build" to construct the Trojan Horse!</div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
-            </div>
+        <div class="phase-info" id="phaseInfo">
+            Phase 1: Baue das Pferd - Bewege dich mit PFEILEN oder WASD
         </div>
+
+        <canvas id="gameCanvas" width="900" height="600"></canvas>
 
         <div class="controls">
-            <button id="actionBtn" onclick="performAction()">BUILD</button>
-            <button onclick="resetGame()">RESET</button>
+            <h3>🎮 STEUERUNG</h3>
+            <p><strong>PFEILE / WASD</strong> - Bewegen</p>
+            <p><strong>LEERTASTE</strong> - Verstecken (nur Phase 2)</p>
+            <p><strong>KLICK / SCHUSS</strong> - Angreifen (nur Phase 3)</p>
+            <div class="button-group">
+                <button onclick="startGame()">SPIEL STARTEN</button>
+                <button onclick="resetGame()">NEUSTART</button>
+            </div>
         </div>
+    </div>
 
-        <div id="gameOverScreen" style="display: none;" class="game-over">
+    <div class="game-over-screen" id="gameOverScreen">
+        <div class="game-over-content">
             <h2 id="gameOverTitle"></h2>
             <p id="gameOverMessage"></p>
-            <button onclick="resetGame()">Play Again</button>
+            <p id="gameOverStats"></p>
+            <button onclick="resetGame()">Nochmal Spielen</button>
         </div>
     </div>
 
     <script>
-        let gameState = {
-            phase: 1,
-            progress: 0,
-            soldiersInside: 0,
-            enemiesDefeated: 0,
-            gameOver: false,
-            horseBuilt: false,
-            sneakProgress: 0,
-            attackProgress: 0
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Responsive canvas
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Game states
+        const PHASES = {
+            BUILDING: 1,
+            SNEAKING: 2,
+            ATTACKING: 3
         };
 
-        const phases = [
-            { title: "Phase 1: Build the Horse", action: "BUILD", description: "Construct a wooden horse to hide soldiers inside!" },
-            { title: "Phase 2: Sneak Inside Troy", action: "SNEAK", description: "Infiltrate the city with your hidden soldiers!" },
-            { title: "Phase 3: Attack!", action: "ATTACK", description: "Strike from within and defeat the enemy!" }
-        ];
+        // Game variables
+        let gameRunning = false;
+        let gameOver = false;
+        let currentPhase = PHASES.BUILDING;
+        let playerHealth = 100;
+        let maxHealth = 100;
+        let soldierCount = 0;
+        let score = 0;
+        let time = 0;
 
-        function performAction() {
-            if (gameState.gameOver) return;
+        // Player
+        let player = {
+            x: canvas.width / 2,
+            y: canvas.height - 100,
+            width: 30,
+            height: 40,
+            speed: 5,
+            hiding: false,
+            health: maxHealth
+        };
 
-            if (gameState.phase === 1) {
-                buildHorse();
-            } else if (gameState.phase === 2) {
-                sneakIn();
-            } else if (gameState.phase === 3) {
-                attack();
+        // Keys
+        let keys = {
+            ArrowUp: false,
+            ArrowDown: false,
+            ArrowLeft: false,
+            ArrowRight: false,
+            w: false,
+            a: false,
+            s: false,
+            d: false,
+            ' ': false
+        };
+
+        // Enemies
+        let enemies = [];
+        let bullets = [];
+
+        // Event listeners
+        document.addEventListener('keydown', (e) => {
+            if (e.key in keys) keys[e.key] = true;
+            if (e.key === ' ') e.preventDefault();
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key in keys) keys[e.key] = false;
+        });
+
+        canvas.addEventListener('click', (e) => {
+            if (currentPhase === PHASES.ATTACKING && gameRunning) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                shootBullet(x, y);
             }
+        });
+
+        function startGame() {
+            gameRunning = true;
+            gameOver = false;
+            currentPhase = PHASES.BUILDING;
+            playerHealth = 100;
+            soldierCount = 0;
+            score = 0;
+            time = 0;
+            player.x = canvas.width / 2;
+            player.y = canvas.height - 100;
+            player.hiding = false;
+            enemies = [];
+            bullets = [];
+            document.getElementById('gameOverScreen').style.display = 'none';
+            spawnEnemies();
+            gameLoop();
         }
 
-        function buildHorse() {
-            gameState.progress += 25;
-            if (gameState.progress >= 100) {
-                gameState.progress = 100;
-                gameState.horseBuilt = true;
-                document.getElementById('status').textContent = "✅ Horse built! The soldiers are ready to board...";
-                document.getElementById('actionBtn').textContent = "PROCEED";
-                
-                setTimeout(() => {
-                    nextPhase();
-                }, 1500);
-            } else {
-                document.getElementById('status').textContent = `🔨 Building... ${gameState.progress}% complete`;
-            }
+        function resetGame() {
+            gameRunning = false;
+            gameOver = false;
+            currentPhase = PHASES.BUILDING;
+            playerHealth = 100;
+            soldierCount = 0;
+            score = 0;
+            enemies = [];
+            bullets = [];
             updateUI();
+            draw();
         }
 
-        function sneakIn() {
-            gameState.sneakProgress += 20;
-            gameState.soldiersInside += 2;
-
-            if (gameState.sneakProgress >= 100) {
-                gameState.sneakProgress = 100;
-                document.getElementById('status').textContent = "✅ All soldiers infiltrated! Time to strike!";
-                document.getElementById('actionBtn').textContent = "PROCEED";
-                
-                setTimeout(() => {
-                    nextPhase();
-                }, 1500);
-            } else {
-                document.getElementById('status').textContent = `🤫 Sneaking in... Soldiers inside: ${gameState.soldiersInside}`;
+        function spawnEnemies() {
+            enemies = [];
+            if (currentPhase === PHASES.BUILDING) {
+                for (let i = 0; i < 3; i++) {
+                    enemies.push({
+                        x: Math.random() * (canvas.width - 40),
+                        y: Math.random() * (canvas.height - 200),
+                        width: 30,
+                        height: 30,
+                        speedX: (Math.random() - 0.5) * 3,
+                        speedY: (Math.random() - 0.5) * 3,
+                        type: 'guard'
+                    });
+                }
+            } else if (currentPhase === PHASES.SNEAKING) {
+                for (let i = 0; i < 5; i++) {
+                    enemies.push({
+                        x: Math.random() * (canvas.width - 40),
+                        y: Math.random() * (canvas.height - 200),
+                        width: 25,
+                        height: 25,
+                        speedX: (Math.random() - 0.5) * 2,
+                        speedY: (Math.random() - 0.5) * 2,
+                        type: 'scout',
+                        sightRange: 150
+                    });
+                }
+            } else if (currentPhase === PHASES.ATTACKING) {
+                for (let i = 0; i < 8; i++) {
+                    enemies.push({
+                        x: Math.random() * (canvas.width - 40),
+                        y: Math.random() * (canvas.height - 100),
+                        width: 25,
+                        height: 25,
+                        speedX: (Math.random() - 0.5) * 4,
+                        speedY: (Math.random() - 0.5) * 4,
+                        type: 'enemy',
+                        health: 2
+                    });
+                }
             }
-            updateUI();
         }
 
-        function attack() {
-            gameState.attackProgress += 25;
-            gameState.enemiesDefeated += 5;
+        function shootBullet(x, y) {
+            const dx = x - player.x;
+            const dy = y - player.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            bullets.push({
+                x: player.x,
+                y: player.y,
+                vx: (dx / dist) * 7,
+                vy: (dy / dist) * 7,
+                life: 100
+            });
+        }
 
-            if (gameState.attackProgress >= 100) {
-                gameState.attackProgress = 100;
+        function update() {
+            if (!gameRunning || gameOver) return;
+
+            time++;
+
+            // Player movement
+            let moveX = 0;
+            let moveY = 0;
+
+            if (keys.ArrowUp || keys.w) moveY -= player.speed;
+            if (keys.ArrowDown || keys.s) moveY += player.speed;
+            if (keys.ArrowLeft || keys.a) moveX -= player.speed;
+            if (keys.ArrowRight || keys.d) moveX += player.speed;
+
+            // Hiding (Phase 2)
+            if (keys[' '] && currentPhase === PHASES.SNEAKING) {
+                player.hiding = true;
+            } else {
+                player.hiding = false;
+            }
+
+            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x + moveX));
+            player.y = Math.max(0, Math.min(canvas.height - player.height, player.y + moveY));
+
+            // Update enemies
+            enemies.forEach((enemy, idx) => {
+                enemy.x += enemy.speedX;
+                enemy.y += enemy.speedY;
+
+                // Boundary
+                if (enemy.x < 0 || enemy.x > canvas.width - enemy.width) enemy.speedX *= -1;
+                if (enemy.y < 0 || enemy.y > canvas.height - enemy.height) enemy.speedY *= -1;
+
+                // Collision with player
+                if (rectCollide(player, enemy)) {
+                    if (currentPhase === PHASES.SNEAKING && player.hiding) {
+                        // Hiding works
+                    } else {
+                        playerHealth -= 2;
+                        enemy.speedX *= -1;
+                        enemy.speedY *= -1;
+                    }
+                }
+            });
+
+            // Update bullets
+            bullets.forEach((bullet, idx) => {
+                bullet.x += bullet.vx;
+                bullet.y += bullet.vy;
+                bullet.life--;
+
+                if (bullet.life <= 0) {
+                    bullets.splice(idx, 1);
+                    return;
+                }
+
+                // Bullet-enemy collision
+                enemies.forEach((enemy, eidx) => {
+                    if (rectCollide(bullet, enemy)) {
+                        enemy.health = (enemy.health || 1) - 1;
+                        if (enemy.health <= 0) {
+                            enemies.splice(eidx, 1);
+                            score += 10;
+                        }
+                        bullets.splice(idx, 1);
+                    }
+                });
+            });
+
+            // Phase progression
+            if (currentPhase === PHASES.BUILDING && time > 300) {
+                if (enemies.length === 0) {
+                    soldierCount += 5;
+                    currentPhase = PHASES.SNEAKING;
+                    spawnEnemies();
+                    time = 0;
+                }
+            } else if (currentPhase === PHASES.SNEAKING && time > 400) {
+                if (enemies.length === 0) {
+                    soldierCount += 5;
+                    currentPhase = PHASES.ATTACKING;
+                    spawnEnemies();
+                    time = 0;
+                }
+            } else if (currentPhase === PHASES.ATTACKING && enemies.length === 0) {
                 endGame(true);
-            } else {
-                document.getElementById('status').textContent = `⚔️ ATTACKING! Enemies defeated: ${gameState.enemiesDefeated}`;
             }
+
+            if (playerHealth <= 0) {
+                endGame(false);
+            }
+
             updateUI();
         }
 
-        function nextPhase() {
-            if (gameState.phase < 3) {
-                gameState.phase++;
-                gameState.progress = 0;
-                updatePhaseDisplay();
-                document.getElementById('actionBtn').textContent = phases[gameState.phase - 1].action;
-            }
+        function rectCollide(a, b) {
+            return a.x < b.x + b.width &&
+                   a.x + a.width > b.x &&
+                   a.y < b.y + b.height &&
+                   a.y + a.height > b.y;
         }
 
-        function updatePhaseDisplay() {
-            const phase = phases[gameState.phase - 1];
-            document.getElementById('phaseTitle').textContent = phase.title;
-            document.getElementById('status').textContent = phase.description;
+        function draw() {
+            ctx.fillStyle = 'linear-gradient(to bottom, #0f3460, #1a1a2e)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            const phaseContainer = document.getElementById('phaseContainer');
-            
-            if (gameState.phase === 1) {
-                phaseContainer.innerHTML = `
-                    <div class="phase-title">${phase.title}</div>
-                    <div class="horse">🐴</div>
-                    <div class="status" id="status">${phase.description}</div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill"></div>
-                    </div>
-                `;
-            } else if (gameState.phase === 2) {
-                phaseContainer.innerHTML = `
-                    <div class="phase-title">${phase.title}</div>
-                    <div class="horse">🐴</div>
-                    <div class="soldiers" id="soldierDisplay"></div>
-                    <div class="status" id="status">${phase.description}</div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill"></div>
-                    </div>
-                `;
-            } else if (gameState.phase === 3) {
-                phaseContainer.innerHTML = `
-                    <div class="phase-title">${phase.title}</div>
-                    <div class="attack">⚔️</div>
-                    <div class="soldiers" id="enemyDisplay"></div>
-                    <div class="status" id="status">${phase.description}</div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill"></div>
-                    </div>
-                `;
+            // Draw phase info
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'left';
+            if (currentPhase === PHASES.BUILDING) {
+                ctx.fillText('⏗ Phase 1: Bau das Pferd', 20, 40);
+            } else if (currentPhase === PHASES.SNEAKING) {
+                ctx.fillText('🤫 Phase 2: Schleiche dich ein', 20, 40);
+            } else if (currentPhase === PHASES.ATTACKING) {
+                ctx.fillText('⚔️ Phase 3: Angriff!', 20, 40);
             }
-            updateUI();
+
+            // Draw player
+            ctx.fillStyle = player.hiding ? '#ffaa00' : '#0099ff';
+            if (player.hiding) {
+                ctx.globalAlpha = 0.5;
+            }
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('🗡️', player.x + player.width / 2, player.y + player.height / 2 + 5);
+
+            // Draw enemies
+            enemies.forEach(enemy => {
+                if (enemy.type === 'guard') {
+                    ctx.fillStyle = '#ff3333';
+                    ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 18px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('🛡️', enemy.x + enemy.width / 2, enemy.y + enemy.height / 2 + 4);
+                } else if (enemy.type === 'scout') {
+                    ctx.fillStyle = '#ff9900';
+                    ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('👁️', enemy.x + enemy.width / 2, enemy.y + enemy.height / 2 + 3);
+                } else {
+                    ctx.fillStyle = '#dd0000';
+                    ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('💀', enemy.x + enemy.width / 2, enemy.y + enemy.height / 2 + 3);
+                }
+            });
+
+            // Draw bullets
+            bullets.forEach(bullet => {
+                ctx.fillStyle = '#ffff00';
+                ctx.fillRect(bullet.x - 3, bullet.y - 3, 6, 6);
+            });
+
+            // Draw crosshair for phase 3
+            if (currentPhase === PHASES.ATTACKING) {
+                ctx.strokeStyle = '#ffd700';
+                ctx.lineWidth = 2;
+                ctx.globalAlpha = 0.5;
+                ctx.beginPath();
+                ctx.arc(player.x + player.width / 2, player.y + player.height / 2, 20, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+
+            // Draw hiding indicator
+            if (player.hiding) {
+                ctx.fillStyle = '#ffaa00';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('VERSTECKT', player.x + player.width / 2, player.y - 15);
+            }
         }
 
         function updateUI() {
-            let currentProgress = gameState.progress;
-            if (gameState.phase === 2) currentProgress = gameState.sneakProgress;
-            if (gameState.phase === 3) currentProgress = gameState.attackProgress;
+            document.getElementById('phaseDisplay').textContent = `${currentPhase}/3`;
+            document.getElementById('healthDisplay').textContent = playerHealth;
+            document.getElementById('soldiersDisplay').textContent = soldierCount;
+            document.getElementById('scoreDisplay').textContent = score;
 
-            document.getElementById('phaseNum').textContent = `${gameState.phase}/3`;
-            document.getElementById('progress').textContent = `${currentProgress}%`;
-            document.getElementById('soldiersInside').textContent = gameState.soldiersInside;
-            document.getElementById('enemiesDefeated').textContent = gameState.enemiesDefeated;
-            document.getElementById('progressFill').style.width = currentProgress + '%';
-            document.getElementById('progressFill').textContent = currentProgress + '%';
-
-            if (gameState.phase === 2) {
-                const soldierDisplay = document.getElementById('soldierDisplay');
-                if (soldierDisplay) {
-                    soldierDisplay.innerHTML = '👨‍🪖 '.repeat(Math.floor(gameState.soldiersInside / 2));
-                }
-            } else if (gameState.phase === 3) {
-                const enemyDisplay = document.getElementById('enemyDisplay');
-                if (enemyDisplay) {
-                    const remaining = Math.max(0, 20 - gameState.enemiesDefeated);
-                    enemyDisplay.innerHTML = '👹 '.repeat(remaining);
-                }
+            if (currentPhase === PHASES.BUILDING) {
+                document.getElementById('phaseInfo').textContent = `Phase 1: Besiege alle Wachen - Feinde: ${enemies.length}`;
+            } else if (currentPhase === PHASES.SNEAKING) {
+                document.getElementById('phaseInfo').textContent = `Phase 2: Schleiche dich vorbei - Drücke LEERTASTE zum Verstecken - Feinde: ${enemies.length}`;
+            } else if (currentPhase === PHASES.ATTACKING) {
+                document.getElementById('phaseInfo').textContent = `Phase 3: Angriff! - Klick zum Schießen - Feinde: ${enemies.length}`;
             }
         }
 
         function endGame(victory) {
-            gameState.gameOver = true;
-            document.getElementById('gameOverScreen').style.display = 'block';
-            document.getElementById('gameBoard').style.opacity = '0.5';
-            
+            gameRunning = false;
+            gameOver = true;
+
+            const screen = document.getElementById('gameOverScreen');
+            const title = document.getElementById('gameOverTitle');
+            const message = document.getElementById('gameOverMessage');
+            const stats = document.getElementById('gameOverStats');
+
+            screen.style.display = 'flex';
+
             if (victory) {
-                document.getElementById('gameOverTitle').textContent = '🎉 VICTORY! 🎉';
-                document.getElementById('gameOverTitle').className = 'victory';
-                document.getElementById('gameOverMessage').textContent = 
-                    `You successfully defeated ${gameState.enemiesDefeated} enemies!\nThe Trojan Horse strategy worked perfectly!`;
+                title.textContent = '🎉 SIEG! 🎉';
+                title.className = 'victory';
+                message.textContent = 'Du hast Troy erobert!';
+                stats.textContent = `Punkte: ${score} | Soldaten: ${soldierCount}`;
             } else {
-                document.getElementById('gameOverTitle').textContent = '💀 DEFEAT 💀';
-                document.getElementById('gameOverTitle').className = 'defeat';
-                document.getElementById('gameOverMessage').textContent = 'Your plan failed! Try again!';
+                title.textContent = '💀 NIEDERLAGE 💀';
+                title.className = 'defeat';
+                message.textContent = 'Du wurdest besiegt!';
+                stats.textContent = `Punkte: ${score} | Soldaten: ${soldierCount}`;
             }
         }
 
-        function resetGame() {
-            gameState = {
-                phase: 1,
-                progress: 0,
-                soldiersInside: 0,
-                enemiesDefeated: 0,
-                gameOver: false,
-                horseBuilt: false,
-                sneakProgress: 0,
-                attackProgress: 0
-            };
-            
-            document.getElementById('gameBoard').style.opacity = '1';
-            document.getElementById('gameOverScreen').style.display = 'none';
-            document.getElementById('actionBtn').textContent = 'BUILD';
-            
-            updatePhaseDisplay();
+        function gameLoop() {
+            update();
+            draw();
+            if (gameRunning) {
+                requestAnimationFrame(gameLoop);
+            }
         }
 
-        // Initialize
-        updatePhaseDisplay();
+        // Start with instructions
+        updateUI();
+        draw();
     </script>
 </body>
 </html>
