@@ -30,7 +30,7 @@
         }
 
         .sidebar {
-            width: 250px;
+            width: 280px;
             background: #1a1a1a;
             border-left: 3px solid #ffd700;
             padding: 20px;
@@ -64,6 +64,31 @@
             font-size: 1.3em;
             color: #ffd700;
             font-weight: bold;
+        }
+
+        .phase-display {
+            background: rgba(255, 100, 100, 0.2);
+            border: 2px solid #ff6464;
+            border-radius: 5px;
+            padding: 10px;
+            text-align: center;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .phase-display.phase1 {
+            background: rgba(100, 150, 255, 0.2);
+            border-color: #6496ff;
+        }
+
+        .phase-display.phase2 {
+            background: rgba(100, 255, 150, 0.2);
+            border-color: #64ff96;
+        }
+
+        .phase-display.phase3 {
+            background: rgba(255, 150, 100, 0.2);
+            border-color: #ff9664;
         }
 
         .upgrades {
@@ -103,17 +128,22 @@
         }
 
         .wave-info {
-            background: rgba(255, 0, 0, 0.1);
-            border: 2px solid #ff3333;
+            background: rgba(100, 200, 255, 0.1);
+            border: 2px solid #64c8ff;
             border-radius: 5px;
             padding: 10px;
             margin: 10px 0;
             text-align: center;
+            font-size: 0.9em;
         }
 
-        .wave-info.active {
-            background: rgba(0, 255, 0, 0.1);
-            border-color: #00ff00;
+        .objective {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 3px solid #ffd700;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 0.85em;
+            border-radius: 3px;
         }
 
         .game-over-overlay {
@@ -176,7 +206,7 @@
             }
 
             .upgrade-btn {
-                font-size: 0.75em;
+                font-size: 0.7em;
                 padding: 8px;
             }
         }
@@ -187,7 +217,9 @@
         <canvas id="gameCanvas"></canvas>
         <div class="sidebar">
             <div>
-                <h2>STATS</h2>
+                <h2>🐴 TROJANER</h2>
+                <div class="phase-display" id="phaseDisplay">PHASE 1: BAUT DAS PFERD</div>
+                
                 <div class="stat">
                     <div class="stat-label">LEBEN</div>
                     <div class="stat-value" id="healthStat">100</div>
@@ -208,10 +240,18 @@
                     <div class="stat-label">FEINDE</div>
                     <div class="stat-value" id="enemyStat">0</div>
                 </div>
-            </div>
+                <div class="stat">
+                    <div class="stat-label">SOLDATEN</div>
+                    <div class="stat-value" id="soldierStat">0</div>
+                </div>
 
-            <div class="wave-info" id="waveInfo">
-                Welle 1 startet...
+                <div class="objective" id="objective">
+                    Baue das Pferd während du die Wachen abwehrst!
+                </div>
+
+                <div class="wave-info" id="waveInfo">
+                    Fortschritt wird geladen...
+                </div>
             </div>
 
             <div class="upgrades">
@@ -243,9 +283,9 @@
     <div class="game-over-overlay" id="gameOverOverlay">
         <div class="game-over-content">
             <h1 id="gameOverTitle">SPIEL VORBEI</h1>
+            <p id="gameOverMessage">Nachricht</p>
             <p id="gameOverScore">Punkte: 0</p>
-            <p id="gameOverWave">Welle erreicht: 1</p>
-            <p id="gameOverKills">Feinde besiegt: 0</p>
+            <p id="gameOverPhase">Phase erreicht: 1</p>
             <button onclick="location.reload()">NOCHMAL SPIELEN</button>
         </div>
     </div>
@@ -255,11 +295,18 @@
         const ctx = canvas.getContext('2d');
 
         function resizeCanvas() {
-            canvas.width = window.innerWidth - 250;
+            canvas.width = window.innerWidth - 280;
             canvas.height = window.innerHeight;
         }
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
+
+        // Game phases
+        const PHASES = {
+            BUILDING: 1,
+            SNEAKING: 2,
+            ATTACKING: 3
+        };
 
         // Game variables
         let gameRunning = true;
@@ -286,11 +333,25 @@
             wave: 1,
             waveTime: 0,
             waveMaxTime: 120,
-            enemyCount: 0
+            enemyCount: 0,
+            phase: PHASES.BUILDING,
+            phaseProgress: 0,
+            soldiers: 0,
+            horseHealth: 0,
+            horseMaxHealth: 100
         };
 
         let enemies = [];
         let particles = [];
+        let horse = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            width: 60,
+            height: 80,
+            health: 0,
+            maxHealth: 100
+        };
+
         let mouse = { x: 0, y: 0 };
 
         // Input
@@ -375,10 +436,23 @@
 
         // Spawn enemies
         function spawnWave() {
-            const count = 5 + game.wave * 3;
+            let count;
+            if (game.phase === PHASES.BUILDING) {
+                count = 3 + game.wave * 2;
+            } else if (game.phase === PHASES.SNEAKING) {
+                count = 4 + game.wave * 2;
+            } else {
+                count = 5 + game.wave * 3;
+            }
+
             for (let i = 0; i < count; i++) {
                 const angle = (Math.random() * Math.PI * 2);
                 const distance = 300 + Math.random() * 100;
+                
+                let type = 'guard';
+                if (game.phase === PHASES.SNEAKING) type = 'scout';
+                if (game.phase === PHASES.ATTACKING) type = 'enemy';
+
                 enemies.push({
                     x: player.x + Math.cos(angle) * distance,
                     y: player.y + Math.sin(angle) * distance,
@@ -387,7 +461,7 @@
                     speed: 2 + game.wave * 0.3,
                     health: 1 + game.wave * 0.5,
                     maxHealth: 1 + game.wave * 0.5,
-                    type: Math.random() > 0.7 ? 'strong' : 'normal'
+                    type: type
                 });
             }
             game.enemyCount = enemies.length;
@@ -400,7 +474,7 @@
 
             for (let i = 0; i < 3; i++) {
                 const angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.3;
-                enemies.forEach((enemy) => {
+                enemies.forEach((enemy, idx) => {
                     const edx = enemy.x - player.x;
                     const edy = enemy.y - player.y;
                     const eDist = Math.sqrt(edx * edx + edy * edy);
@@ -415,8 +489,15 @@
                                 game.score += 10 + game.wave * 5;
                                 game.gold += 10 + game.wave * 2;
                                 player.kills++;
+
+                                if (game.phase === PHASES.BUILDING) {
+                                    game.soldiers += 2;
+                                } else if (game.phase === PHASES.SNEAKING) {
+                                    game.soldiers += 1;
+                                }
+
                                 spawnParticles(enemy.x, enemy.y, 5);
-                                enemies = enemies.filter(e => e !== enemy);
+                                enemies.splice(idx, 1);
                                 game.enemyCount--;
                             }
                         }
@@ -488,7 +569,7 @@
             }
 
             // Enemy AI
-            enemies.forEach(enemy => {
+            enemies.forEach((enemy, idx) => {
                 const dx = player.x - enemy.x;
                 const dy = player.y - enemy.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
@@ -512,16 +593,28 @@
                 return p.life > 0;
             });
 
-            // Wave progression
+            // Phase progression
             if (game.waveTime > game.waveMaxTime) {
-                game.wave++;
-                game.waveTime = 0;
-                spawnWave();
+                if (game.phase === PHASES.BUILDING && enemies.length === 0) {
+                    game.phase = PHASES.SNEAKING;
+                    game.waveTime = 0;
+                    spawnWave();
+                } else if (game.phase === PHASES.SNEAKING && enemies.length === 0) {
+                    game.phase = PHASES.ATTACKING;
+                    game.waveTime = 0;
+                    spawnWave();
+                } else if (game.phase === PHASES.ATTACKING && enemies.length === 0) {
+                    endGame(true);
+                } else {
+                    game.wave++;
+                    game.waveTime = 0;
+                    spawnWave();
+                }
             }
 
             // Game over
             if (player.health <= 0) {
-                endGame();
+                endGame(false);
             }
 
             updateUI();
@@ -544,6 +637,11 @@
             ctx.beginPath();
             ctx.arc(player.x, player.y, player.width / 2, 0, Math.PI * 2);
             ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('⚔️', player.x, player.y);
 
             // Draw health bar
             ctx.fillStyle = '#ff0000';
@@ -551,12 +649,23 @@
             ctx.fillStyle = '#00ff00';
             ctx.fillRect(player.x - 20, player.y - 35, (player.health / player.maxHealth) * 40, 5);
 
+            // Draw horse (Phase 1)
+            if (game.phase === PHASES.BUILDING) {
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(horse.x - 30, horse.y - 40, 60, 80);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 40px Arial';
+                ctx.fillText('🐴', horse.x, horse.y - 10);
+            }
+
             // Draw enemies
             enemies.forEach(enemy => {
-                if (enemy.type === 'strong') {
-                    ctx.fillStyle = '#ff6600';
+                if (enemy.type === 'guard') {
+                    ctx.fillStyle = '#ff3333';
+                } else if (enemy.type === 'scout') {
+                    ctx.fillStyle = '#ff9900';
                 } else {
-                    ctx.fillStyle = '#ff0000';
+                    ctx.fillStyle = '#dd0000';
                 }
                 ctx.fillRect(enemy.x - enemy.width / 2, enemy.y - enemy.height / 2, enemy.width, enemy.height);
 
@@ -577,11 +686,15 @@
             ctx.fillStyle = '#ffd700';
             ctx.font = 'bold 24px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(`WELLE ${game.wave}`, canvas.width / 2, 50);
-
-            // Draw combo
+            
+            let phaseText = 'BAUE DAS PFERD';
+            if (game.phase === PHASES.SNEAKING) phaseText = 'SCHLEICHE DICH EIN';
+            if (game.phase === PHASES.ATTACKING) phaseText = 'ANGRIFF!';
+            
+            ctx.fillText(phaseText, canvas.width / 2, 50);
             ctx.font = 'bold 16px Arial';
-            ctx.fillText(`Enemies: ${game.enemyCount}`, canvas.width / 2, 80);
+            ctx.fillText(`Welle ${game.wave}`, canvas.width / 2, 80);
+            ctx.fillText(`Feinde: ${game.enemyCount}`, canvas.width / 2, 110);
         }
 
         function updateUI() {
@@ -590,19 +703,43 @@
             document.getElementById('waveStat').textContent = game.wave;
             document.getElementById('goldStat').textContent = game.gold;
             document.getElementById('enemyStat').textContent = game.enemyCount;
+            document.getElementById('soldierStat').textContent = game.soldiers;
 
-            const waveInfo = document.getElementById('waveInfo');
+            const phaseDisplay = document.getElementById('phaseDisplay');
+            phaseDisplay.className = 'phase-display';
+            
+            if (game.phase === PHASES.BUILDING) {
+                phaseDisplay.className += ' phase1';
+                phaseDisplay.textContent = '🔨 PHASE 1: BAUE DAS PFERD';
+                document.getElementById('objective').textContent = 'Besiege alle Wachen und baue das Pferd!';
+            } else if (game.phase === PHASES.SNEAKING) {
+                phaseDisplay.className += ' phase2';
+                phaseDisplay.textContent = '🤫 PHASE 2: SCHLEICHE DICH EIN';
+                document.getElementById('objective').textContent = 'Überpringe alle Späher und verstecke Soldaten im Pferd!';
+            } else if (game.phase === PHASES.ATTACKING) {
+                phaseDisplay.className += ' phase3';
+                phaseDisplay.textContent = '⚔️ PHASE 3: ANGRIFF!';
+                document.getElementById('objective').textContent = 'Angriff! Besiege alle Feinde von innen!';
+            }
+
             const progress = Math.floor((game.waveTime / game.waveMaxTime) * 100);
-            waveInfo.textContent = `Welle ${game.wave}: ${progress}%`;
+            document.getElementById('waveInfo').textContent = `Welle ${game.wave}: ${progress}%`;
         }
 
-        function endGame() {
+        function endGame(victory) {
             gameRunning = false;
             document.getElementById('gameOverOverlay').style.display = 'flex';
-            document.getElementById('gameOverTitle').textContent = '💀 SPIEL VORBEI 💀';
+            
+            if (victory) {
+                document.getElementById('gameOverTitle').textContent = '🎉 SIEG! 🎉';
+                document.getElementById('gameOverMessage').textContent = 'Du hast Troy erobert! Das Trojanische Pferd war erfolgreich!';
+            } else {
+                document.getElementById('gameOverTitle').textContent = '💀 NIEDERLAG 💀';
+                document.getElementById('gameOverMessage').textContent = 'Du wurdest besiegt! Versuche es nochmal!';
+            }
+            
             document.getElementById('gameOverScore').textContent = `Punkte: ${game.score}`;
-            document.getElementById('gameOverWave').textContent = `Welle erreicht: ${game.wave}`;
-            document.getElementById('gameOverKills').textContent = `Feinde besiegt: ${player.kills}`;
+            document.getElementById('gameOverPhase').textContent = `Phase erreicht: ${game.phase}/3`;
         }
 
         function gameLoop() {
